@@ -148,7 +148,48 @@ Kame = {
       this.render = function () {        
         Kame.Canvas.Context.drawImage(this.cnv, this.cx, this.cy)
       }
+    }
+  },
+  Controller: {
+    List: [],
+    init: function () {
+      // Browser wrangling      
+      window.addEventListener("gamepadconnected", (e) => {
+        console.log("Gamepad connected at index %d: %s. %d buttons, %d axes.",
+          e.gamepad.index, e.gamepad.id,
+          e.gamepad.buttons.length, e.gamepad.axes.length);
+        Kame.Controller.connect(e.gamepad)
+      });
+      window.addEventListener("gamepaddisconnected", (e) => {
+        console.log("Gamepad disconnected from index %d: %s",
+          e.gamepad.index, e.gamepad.id);          
+        Kame.Controller.disconnect(e.gamepad)
+      });
+      // Checking if any controllers are connected
+      let gamepads = navigator.getGamepads()
+      let connected = false
+      for (const gamepad of gamepads) {
+        if (gamepad) { Kame.Controller.update(); return true}
+      }
+      console.log("No controllers found")
+      return false
     },
+    connect: function (gamepad) {
+      Kame.Controller.List.push(gamepad.index)
+      // console.log(Kame.Controller.List)
+    },
+    disconnect: function (gamepad) {
+      console.log(gamepad)
+      Kame.Controller.List.splice(Kame.Controller.List.indexOf(gamepad.index))
+      // console.log(Kame.Controller.List)
+    },
+    update: function () {
+      let controllers = navigator.getGamepads()
+      for (const c of Kame.Controller.List) {
+        let controller = controllers[c]
+        console.log(controller)
+      }
+    }
   },
   Util: {
     benchmark: function (name) {
@@ -164,6 +205,9 @@ Kame = {
     degToRad: function (degree) {
       return degree * Math.PI / 180
     },
+    radToDeg: function (rad) {
+      return rad * 180 / Math.PI
+    },
     getRngCol: function () {
       let r = 255 * Math.random() | 0,
           g = 255 * Math.random() | 0,
@@ -174,20 +218,10 @@ Kame = {
 }
 
 
-function boot () {
+function boot () { 
   Kame.Canvas.init()
-  let test = 0
-  let iterations = 200_000
-  let time = Kame.Util.benchmark("Generating Lines: " + iterations)
-  for (let i = 0; i < iterations; i++) {
-    Kame.Canvas.fillVert( [
-      {x: (Math.random() * 300) | 0, y: (Math.random() * 300) | 0},
-      {x: (Math.random() * 300) | 0, y: (Math.random() * 300) | 0},
-      {x: (Math.random() * 300) | 0, y: (Math.random() * 300) | 0}
-    ], Kame.Util.getRngCol())
-  }
-  time.stop()
-  console.log(test)
+  Kame.Controller.init()
+  setInterval(Kame.Controller.update, 1000 / 10)
 }
 
 window.onload = boot()

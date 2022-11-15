@@ -116,6 +116,28 @@ Kame = {
     },
   },
   Camera: {
+    SimpleSprite: function (template) {
+      template = template || {};
+
+      this.x = template.x || 0;
+      this.y = template.y || 0;
+
+      if (template.t) { this.t = template.t } else {
+        let cnv = document.createElement("canvas")
+        cnv.width = 20; cnv.height = 20;
+        let ctx = cnv.getContext("2d")
+        ctx.fillStyle = "#FF00FF"
+        ctx.fillRect(0, 0, 20, 20)
+        ctx.strokeStyle = "black"
+        ctx.beginPath()
+        ctx.moveTo(0, 0)
+        ctx.lineTo(20, 20)
+        ctx.moveTo(0, 20)
+        ctx.lineTo(20, 0)
+        ctx.stroke();
+        this.t = cnv
+      }
+    },
     Simple2d: function (template) {
       template = template || {}
       this.cnv = document.createElement("canvas")
@@ -141,7 +163,7 @@ Kame = {
       // A way to display them
       this.updateBuffer = function () {
         for (const sprite of this.Sprites) {
-          this.ctx.drawImage(sprite.texture, sprite.x - this.x, sprite.y - this.y)
+          this.ctx.drawImage(sprite.t, sprite.x - this.x, sprite.y - this.y)
         }
       },
       // Decoupling drawing to the screen from 
@@ -221,7 +243,11 @@ Kame = {
 function boot () { 
   Kame.Canvas.init()
   Kame.Controller.init()
-  setInterval(Kame.Controller.update, 1000 / 10)
+  let sprites = [new Kame.Camera.SimpleSprite()]
+  let screen = new Kame.Camera.Simple2d({Sprites: sprites})
+  screen.updateBuffer()
+  screen.render()
+
 }
 
 window.onload = boot()
